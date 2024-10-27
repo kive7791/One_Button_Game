@@ -1,5 +1,9 @@
 extends CharacterBody2D
 
+class_name player
+
+signal game_started
+
 # Player movement
 @export var move_speed: float = 3800.0 #Delta is wierd  
 @export var gravity: float = 3500.0   #starting speed strength
@@ -9,8 +13,11 @@ extends CharacterBody2D
 @export var reset_threshold: float = 3.0 # Time (in seconds) before resetting the player if no movement
 @export var reset_position: Vector2 = Vector2(28, 630) # Position to reset to
 
+# Game 
+var started = false 
 # Player health
 var health: int = 10
+var process_input = true
 # For player movement
 var direction: Vector2 = Vector2(1, 0)  # Initial movement direction (right)
 var jump_count: int = 0  # number of jumps
@@ -28,11 +35,22 @@ func _ready():
 	bounds.connect("bounds_hit", Callable(self, "_on_bounds_hit"))
 	crystal_collected.connect("crystal_collected", Callable(self, "_on_crystal_collected"))
 	
+	$AnimatedSprite2D.play("Idle")
 	last_position = position  # Initialize last_position
 	stationary_timer = 0.0  # Reset timer at start
 
 func _physics_process(delta):
 	check_on_floor() # Update the 'on_floor' status every frame
+	# jump and game start logic 
+	if Input.is_action_just_pressed("Jump") and jump_count < max_jump and process_input:
+		if !started:
+			$AnimatedSprite2D.play("Walk")
+			game_started.emit()
+			started = true
+		jump()
+	
+	if !started:
+		return
 	
 	velocity = direction * move_speed * delta # right mvoement at time at move speed
 	
@@ -45,11 +63,6 @@ func _physics_process(delta):
 		jump_count = 0 #rest jumps
 	
 	#print(on_floor)
-	
-	# jump logic
-	if Input.is_action_just_pressed("Jump") and jump_count < max_jump:
-		velocity.y = -jumpForce #set jump velocity
-		jump_count += 1 #increment the jump count
 	
 	# move the player
 	move_and_slide()
@@ -65,6 +78,10 @@ func _physics_process(delta):
 	if stationary_timer >= reset_threshold:
 		reset_player_position()
 		
+func jump():
+	velocity.y = -jumpForce #set jump velocity
+	jump_count += 1 #increment the jump count
+
 func reset_player_position():
 	print("Player has been stationary too long, resetting position.")
 	position = reset_position
@@ -74,6 +91,15 @@ func reset_player_position():
 func _on_bounds_hit(body):
 	# If the bounds - playerArea is hit/ interacted with then
 	direction.x *= -1  # Reverse direction
+
+func die():
+	process_input = false
+	
+
+func stop():
+	$AnimatedSprite2D.stop()
+	gravity = 0 
+	velocity = Vector2.ZERO
 
 func _on_crystal_collected(body):
 	# If the crystal is collected then
