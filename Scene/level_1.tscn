@@ -3840,7 +3840,7 @@ tile_set = SubResource("TileSet_f77yt")
 
 [node name="Player" parent="." groups=["Player"] instance=ExtResource("1_xy1hh")]
 unique_name_in_owner = true
-position = Vector2(577, 159)
+position = Vector2(42, 634)
 scale = Vector2(2, 2)
 collision_layer = 1
 collision_mask = 6
@@ -3960,7 +3960,7 @@ scale = Vector2(0.5, 0.5)
 
 [node name="crystal_collectable3" parent="." instance=ExtResource("8_0umtg")]
 unique_name_in_owner = true
-position = Vector2(577, 94)
+position = Vector2(577, 90)
 scale = Vector2(0.5, 0.5)
 
 [node name="crystal_collectable4" parent="." instance=ExtResource("8_0umtg")]

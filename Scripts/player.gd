@@ -6,9 +6,9 @@ signal game_started
 
 # Player movement
 @export var move_speed: float = 3800.0 #Delta is wierd  
-@export var gravity: float = 3500.0   #starting speed strength
-@export var max_fall_speed: float = 2400.0 # end speed
-@export var jumpForce: float = 4500 #up level
+@export var gravity: float = 3000.0   # speed of fall
+@export var max_fall_speed: float = 3500.0 # end speed of fall
+@export var jumpForce: float = 4500.0 # hieght of jump
 @export var max_jump: int = 2 # max jumps allowed
 @export var reset_threshold: float = 3.0 # Time (in seconds) before resetting the player if no movement
 @export var reset_position: Vector2 = Vector2(28, 630) # Position to reset to
@@ -41,18 +41,21 @@ func _ready():
 
 func _physics_process(delta):
 	check_on_floor() # Update the 'on_floor' status every frame
+	
 	# jump and game start logic 
 	if Input.is_action_just_pressed("Jump") and jump_count < max_jump and process_input:
+		# Check that the game has started
 		if !started:
 			$AnimatedSprite2D.play("Walk")
 			game_started.emit()
 			started = true
 		jump()
 	
+	# Game not start do it over
 	if !started:
 		return
 	
-	velocity = direction * move_speed * delta # right mvoement at time at move speed
+	velocity = direction * move_speed * delta
 	
 	# was using is_on_floor() but it was always printing out false so changed 
 	# If the player is in the air (not on the floor), gravity applied
@@ -62,12 +65,19 @@ func _physics_process(delta):
 	else:
 		jump_count = 0 #rest jumps
 	
-	#print(on_floor)
+	print("Jump count: ", jump_count, "Velocity: ", velocity, "Floor? ", on_floor, "Timer: ", stationary_timer, "last position: ", last_position)
 	
 	# move the player
 	move_and_slide()
 	
-	# Player reset 
+	# Player position checked and reset
+	check_position(delta)
+
+func jump():
+	velocity.y = -jumpForce #set jump velocity
+	jump_count += 1 #increment the jump count
+
+func check_position(delta):
 	# Check if player has moved
 	if position == last_position:
 		stationary_timer += delta
@@ -77,10 +87,6 @@ func _physics_process(delta):
 	# Check if the player has been stationary too long
 	if stationary_timer >= reset_threshold:
 		reset_player_position()
-		
-func jump():
-	velocity.y = -jumpForce #set jump velocity
-	jump_count += 1 #increment the jump count
 
 func reset_player_position():
 	print("Player has been stationary too long, resetting position.")
@@ -94,7 +100,6 @@ func _on_bounds_hit(body):
 
 func die():
 	process_input = false
-	
 
 func stop():
 	$AnimatedSprite2D.stop()
@@ -107,10 +112,8 @@ func _on_crystal_collected(body):
 	pass
 	# play a sound effect
 
-
 func check_on_floor():
 	on_floor = floor_ray.is_colliding()
-
 
 func take_damage(dam: int) -> void:
 	#Implement this later 
