@@ -92,3 +92,6 @@ func take_damage(dam: int) -> void:
 	health -= dam
 	#if health <= 0:
 		#Game_Over()
+
+func game_over():
+	pass
