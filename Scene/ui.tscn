@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://2niogm4wo0vl"]
+
+[ext_resource type="Script" path="res://Scripts/ui.gd" id="1_ruasb"]
+
+[node name="UI" type="CanvasLayer"]
+script = ExtResource("1_ruasb")
+
+[node name="EndScreen" type="Node2D" parent="."]
