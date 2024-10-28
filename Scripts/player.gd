@@ -5,10 +5,10 @@ class_name player
 signal game_started
 
 # Player movement
-@export var move_speed: float = 3800.0 #Delta is wierd  
-@export var gravity: float = 3000.0   # speed of fall
-@export var max_fall_speed: float = 3500.0 # end speed of fall
-@export var jumpForce: float = 4500.0 # hieght of jump
+@export var move_speed: float = 2800.0 # movement speed  
+@export var gravity: float = 1000.0   # speed of fall
+@export var max_fall_speed: float = 2500.0 # end speed of fall
+@export var jumpForce: float = 250000.0 # hieght of jump
 @export var max_jump: int = 2 # max jumps allowed
 @export var reset_threshold: float = 3.0 # Time (in seconds) before resetting the player if no movement
 @export var reset_position: Vector2 = Vector2(28, 630) # Position to reset to
@@ -19,7 +19,7 @@ var started = false
 var health: int = 10
 var process_input = true
 # For player movement
-var direction: Vector2 = Vector2(1, 0)  # Initial movement direction (right)
+var direction: Vector2 = Vector2(-1, 0)  # Initial movement direction (right)
 var jump_count: int = 0  # number of jumps
 # Player position 
 var on_floor: bool = true # is player on the floor
@@ -40,32 +40,34 @@ func _ready():
 	stationary_timer = 0.0  # Reset timer at start
 
 func _physics_process(delta):
+	# was using is_on_floor() but it was always printing out false so changed 
+	# If the player is in the air (not on the floor), gravity applied
 	check_on_floor() # Update the 'on_floor' status every frame
+	if !on_floor:
+		$AnimatedSprite2D.play("Jump")
+		velocity.y += gravity * delta
+		velocity.y = clamp(velocity.y, -max_fall_speed*delta, max_fall_speed*delta) # Cap the fall speed to max_fall_speed
+	else:
+		$AnimatedSprite2D.play("Walk")
+		jump_count = 0 #rest jumps
 	
 	# jump and game start logic 
 	if Input.is_action_just_pressed("Jump") and jump_count < max_jump and process_input:
 		# Check that the game has started
+		print("Jump_count ", jump_count, " max_jump: ", max_jump)
 		if !started:
 			$AnimatedSprite2D.play("Walk")
 			game_started.emit()
 			started = true
-		jump()
+		else:
+			jump(delta)
 	
 	# Game not start do it over
 	if !started:
 		return
 	
-	velocity = direction * move_speed * delta
+	velocity.x = direction.x * move_speed * delta
 	
-	# was using is_on_floor() but it was always printing out false so changed 
-	# If the player is in the air (not on the floor), gravity applied
-	if !on_floor:
-		velocity.y += gravity * delta 
-		velocity.y = clamp(velocity.y, -max_fall_speed, max_fall_speed) # Cap the fall speed to max_fall_speed
-	else:
-		jump_count = 0 #rest jumps
-	
-	print("Jump count: ", jump_count, "Velocity: ", velocity, "Floor? ", on_floor, "Timer: ", stationary_timer, "last position: ", last_position)
 	
 	# move the player
 	move_and_slide()
@@ -73,8 +75,12 @@ func _physics_process(delta):
 	# Player position checked and reset
 	check_position(delta)
 
-func jump():
-	velocity.y = -jumpForce #set jump velocity
+func jump(delta):
+	$AnimatedSprite2D.play("Jump")
+	if (jump_count == 0):
+		velocity.y = -jumpForce * delta #set jump velocity
+	elif (jump_count == 1):
+		velocity.y += -jumpForce* delta #set jump velocity
 	jump_count += 1 #increment the jump count
 
 func check_position(delta):
